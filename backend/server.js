@@ -34,14 +34,29 @@ app.use('/api/habits', habitRoutes);
 app.use('/api/calories', calorieRoutes);
 app.use('/api/exercise', exerciseRoutes);
 
-// Health check
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'HabitBite AI Server is running 🚀' });
-});
-
 // Error handling
 app.use(notFound);
 app.use(errorHandler);
+
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve Static Frontend for Cloud Run Single Container Deployment
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../frontend/dist')));
+  
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../frontend', 'dist', 'index.html'));
+  });
+} else {
+  // Health check
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', message: 'HabitBite AI Server is running 🚀' });
+  });
+}
 
 // Connect to DB and start server
 connectDB().then(() => {
